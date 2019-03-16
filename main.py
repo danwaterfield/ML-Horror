@@ -5,8 +5,13 @@ import numpy as np
 import pandas as pd 
 import nltk 
 import string
+import matplotlib.pyplot as plt
+import seaborn as sns
+
 
 df = pd.read_csv('~/documents/github/ml-horror/train.csv')
+#print(df.head(5)) if you want to check it's inputted correctly
+
 # removes punctuation for word counting purposes.
 no_punct_translator=str.maketrans('','',string.punctuation)
 # tokenize each sentence and remove punctuation
@@ -20,4 +25,16 @@ df['sentence_length'] = df['words'].apply(lambda w: sum(map(len, w)))
 # for future calculations, let's keep around the full text length, including punctuation
 df['text_length'] = df['text'].apply(lambda t: len(t))
 
-print(df.head(5))
+#print(df.head(5)) checks everything's working correctly: it is!
+
+
+sns.set_style('whitegrid') # sets style for graphs imported above
+
+""" 
+This exports the snsplot to a png in the folder.
+
+sns_plot = sns.boxplot(x = "author", y = "word_count", data=df, color = "red") # plots word per sentence.
+fig = sns_plot.get_figure()
+fig.savefig('plot.png')
+"""
+sns.boxplot(x = "author", y = "word_count", data=df, color = "red") # plots word per sentence.
