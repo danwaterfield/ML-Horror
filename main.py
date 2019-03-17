@@ -24,7 +24,7 @@ df['sentence_length'] = df['words'].apply(lambda w: sum(map(len, w)))
 # for future calculations, let's keep around the full text length, including punctuation
 df['text_length'] = df['text'].apply(lambda t: len(t))
 
-print(df.head(5)) #checks everything's working correctly: it is!
+#print(df.head(5)) #checks everything's working correctly: it is!
 
 
 sns.set_style('whitegrid') # sets style for graphs imported above
@@ -38,4 +38,34 @@ fig.savefig('plot.png')
 """
 #sns.boxplot(x = "author", y = "word_count", data=df, color = "red") # plots word per sentence.
 
-#print(str(df.groupby(['author'])['sentence_length'].describe())
+""" prints chars in each sentence
+print(df.groupby(['author'])['sentence_length'].describe())
+"""
+
+def unique_words(words):
+    word_count = len(words)
+    unique_count = len(set(words)) # creating a set from the list 'words' removes duplicates
+    return unique_count / word_count
+
+df['unique_ratio'] = df['words'].apply(unique_words)
+print(df.groupby(['author'])['unique_ratio'].describe())
+
+# graphs unique word per author distribution.
+
+authors = ['MWS', 'HPL', 'EAP']
+
+for author in authors:
+    sns.distplot(df[df['author'] == author]['unique_ratio'], label = author, hist=False)
+
+plt.legend();
+
+"""
+prints aforementioned dist to dir
+
+sns_dist = sns.distplot(df[df['author'] == author]['unique_ratio'], label = author, hist=False)
+
+fig2 = sns_dist.get_figure()
+fig2.savefig('dist.png')
+
+"""
+
