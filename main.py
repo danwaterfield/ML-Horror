@@ -6,7 +6,9 @@ import nltk
 import string
 import matplotlib.pyplot as plt
 import seaborn as sns
+from nltk.sentiment.vader import SentimentIntensityAnalyzer 
 
+sid = SentimentIntensityAnalyzer()
 
 df = pd.read_csv('~/documents/github/ml-horror/train.csv')
 #print(df.head(5)) if you want to check it's inputted correctly
@@ -48,24 +50,42 @@ def unique_words(words):
     return unique_count / word_count
 
 df['unique_ratio'] = df['words'].apply(unique_words)
-print(df.groupby(['author'])['unique_ratio'].describe())
+# print(df.groupby(['author'])['unique_ratio'].describe())
 
 # graphs unique word per author distribution.
 
 authors = ['MWS', 'HPL', 'EAP']
-
+"""
 for author in authors:
-    sns.distplot(df[df['author'] == author]['unique_ratio'], label = author, hist=False)
+   sns.distplot(df[df['author'] == author]['unique_ratio'], label = author, hist=False)
 
 plt.legend();
-
 """
-prints aforementioned dist to dir
-
+"""
 sns_dist = sns.distplot(df[df['author'] == author]['unique_ratio'], label = author, hist=False)
 
 fig2 = sns_dist.get_figure()
 fig2.savefig('dist.png')
 
 """
+""" prints sentiment analysis for these two example sentences 
+print(sid.polarity_scores('Vader text analysis is my favorite thing ever'))
+print(sid.polarity_scores('I hate vader and everything it stands for'))
+""" 
+
+df['sentiment'] = df['text'].apply(lambda t: sid.polarity_scores(t)['compound'])
+df.groupby('author')['sentiment'].describe()
+
+
+for author in authors:
+    sns.distplot(df[df['author'] == author]['sentiment'], label = author, hist=False)
+
+plt.legend();
+
+sns_sent = sns.distplot(df[df['author'] == author]['sentiment'], label = author, hist=False)
+
+fig3 = sns_sent.get_figure()
+fig3.savefig('sentiment.png')
+
+sns.boxplot(x="author", y="sentiment", data=df).savefig('boxsent.jpg')
 
