@@ -87,5 +87,5 @@ sns_sent = sns.distplot(df[df['author'] == author]['sentiment'], label = author,
 fig3 = sns_sent.get_figure()
 fig3.savefig('sentiment.png')
 
-sns.boxplot(x="author", y="sentiment", data=df).savefig('boxsent.jpg')
+# makes a boxplot sns.boxplot(x="author", y="sentiment", data=df)
 
