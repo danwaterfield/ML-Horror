@@ -7,6 +7,8 @@ import string
 import matplotlib.pyplot as plt
 import seaborn as sns
 from nltk.sentiment.vader import SentimentIntensityAnalyzer 
+from wordcloud import WordCloud, STOPWORDS
+
 
 sid = SentimentIntensityAnalyzer()
 
@@ -88,4 +90,43 @@ fig3 = sns_sent.get_figure()
 fig3.savefig('sentiment.png')
 
 # makes a boxplot sns.boxplot(x="author", y="sentiment", data=df)
+
+
+
+
+
+# iterate all rows and create a new dataframe with author->word (single word)
+df_words = pd.concat([pd.DataFrame(data={'author': [row['author'] for _ in row['words']], 'word': row['words']})
+           for _, row in df.iterrows()], ignore_index=True)
+
+# use NLTK to remove all rows with simple stop words
+df_words = df_words[~df_words['word'].isin(nltk.corpus.stopwords.words('english'))]
+
+df_words.shape
+
+
+def authorWordcloud(author):
+    # lower max_font_size
+    wordcloud = WordCloud(max_font_size=40,background_color="black", max_words=10000).generate(" ".join(df_words[df_words['author'] == author]['word'].values))
+    plt.figure(figsize=(11,13))
+    plt.title(author, fontsize=16)
+    plt.imshow(wordcloud, interpolation="bilinear")
+    plt.axis("off")
+    plt.show()
+
+"""again, to save as an image file you need to assign each wordcloud to a variable, then use safefig('name.png etc here)
+    
+authorWordcloud('HPL')
+authorWordcloud('EAP')
+authorWordcloud('MWS')
+"""
+
+# function for a specific author to count occurances of each word
+def authorCommonWords(author, numWords):
+    authorWords = df_words[df_words['author'] == author].groupby('word').size().reset_index().rename(columns={0:'count'})
+    authorWords.sort_values('count', inplace=True)
+    return authorWords[-numWords:]
+
+# for example, here's how we get the 10 most common EAP words.
+print(authorCommonWords('EAP', 10)) 
 
