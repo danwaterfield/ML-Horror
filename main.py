@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from nltk.sentiment.vader import SentimentIntensityAnalyzer 
 from wordcloud import WordCloud, STOPWORDS
-
+import tensorflow as tf
 
 sid = SentimentIntensityAnalyzer()
 
@@ -29,6 +29,15 @@ df['sentence_length'] = df['words'].apply(lambda w: sum(map(len, w)))
 df['text_length'] = df['text'].apply(lambda t: len(t))
 
 #print(df.head(5)) #checks everything's working correctly: it is!
+avg_length = lambda words: sum(map(len, words)) / len(words)
+
+df['avg_word_length'] = df['words'].apply(avg_length)
+df.groupby(['author'])['avg_word_length'].describe()
+df.groupby(['author'])['sentence_length'].describe()
+
+df['punctuation_count'] = df['text'].apply(lambda t: len(list(filter(lambda c: c in t, string.punctuation))))
+
+df['punctuation_per_char'] = df['punctuation_count'] / df['text_length'] 
 
 
 sns.set_style('whitegrid') # sets style for graphs imported above
@@ -128,5 +137,31 @@ def authorCommonWords(author, numWords):
     return authorWords[-numWords:]
 
 # for example, here's how we get the 10 most common EAP words.
-print(authorCommonWords('EAP', 10)) 
+# print(authorCommonWords('EAP', 10)) 
+
+
+
+
+
+authors_top_words = []
+for author in authors:
+    authors_top_words.extend(authorCommonWords(author, 10)['word'].values)
+
+# use a set to remove duplicates
+authors_top_words = list(set(authors_top_words))
+
+df['top_words'] = df['words'].apply(lambda w: list(set(filter(set(w).__contains__, authors_top_words))))
+df[['author','top_words', 'words']].head()
+
+
+feature_columns = ['author', 'word_count', 'text_length', 'punctuation_per_char', 'unique_ratio', 'avg_word_length', 'sentiment']
+df_features = df[feature_columns]
+
+
+df_train=df_features.sample(frac=0.8,random_state=1)
+df_dev=df_features.drop(df_train.index)
+
+print(df_train.head())
+
+
 
