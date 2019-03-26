@@ -9,6 +9,10 @@ import seaborn as sns
 from nltk.sentiment.vader import SentimentIntensityAnalyzer 
 from wordcloud import WordCloud, STOPWORDS
 import tensorflow as tf
+import tempfile
+
+
+model_dir = tempfile.mkdtemp()
 
 sid = SentimentIntensityAnalyzer()
 
@@ -161,7 +165,59 @@ df_features = df[feature_columns]
 df_train=df_features.sample(frac=0.8,random_state=1)
 df_dev=df_features.drop(df_train.index)
 
-print(df_train.head())
+(df_train.head())
+
+
+
+feature_word_count = tf.feature_column.numeric_column("word_count")
+feature_text_length = tf.feature_column.numeric_column("text_length")
+feature_punctuation_per_char = tf.feature_column.numeric_column("punctuation_per_char")
+feature_unique_ratio = tf.feature_column.numeric_column("unique_ratio")
+feature_avg_word_length = tf.feature_column.numeric_column("avg_word_length")
+feature_sentiment = tf.feature_column.numeric_column("sentiment")
+
+# if we just used the single top word we could do it this way (single-hot)
+feature_top_words = tf.feature_column.categorical_column_with_vocabulary_list("top_words", vocabulary_list=authors_top_words)
+
+feature_top_words = tf.feature_column.indicator_column(tf.feature_column.categorical_column_with_vocabulary_list("top_words_test", vocabulary_list=authors_top_words))
+
+base_columns = [feature_word_count, feature_text_length, feature_punctuation_per_char, feature_unique_ratio, feature_avg_word_length, feature_sentiment]
+
+labels_train = df_train['author']
+
+train_fn = tf.estimator.inputs.pandas_input_fn(
+    x=df_train,
+    y=labels_train,
+    batch_size=100,
+    num_epochs=None, # unlimited
+    shuffle=True, # shuffle the training data around
+    num_threads=5)
+
+# let's try a simple linear classifier
+linear_model = tf.estimator.LinearClassifier(
+    model_dir=model_dir, 
+    feature_columns=base_columns,
+    n_classes=len(authors),
+    label_vocabulary=authors)
+
+
+train_steps = 5000
+
+
+linear_model.train(input_fn=train_fn, steps=train_steps)
+
+# let's see how well we did on our training set
+dev_test_fn = tf.estimator.inputs.pandas_input_fn(
+    x=df_dev,
+    y=df_dev['author'],
+    batch_size=100,
+    num_epochs=1, # just one run
+    shuffle=False, # don't shuffle test here
+    num_threads=5)
+
+print(linear_model.evaluate(input_fn=dev_test_fn)["accuracy"])
+
+
 
 
 
